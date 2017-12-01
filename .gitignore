@@ -1,3 +1,5 @@
 **/vk_config*.*
 bot_config.cfg
 **/*.pyc
+**/__pycache__
+**/__disabled__
