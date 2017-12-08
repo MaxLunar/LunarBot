@@ -16,19 +16,55 @@ def call(**kw):
             action = msg.pop(0)
             
             if msg:
-                access = bot.config['access']
+                acc = bot.config['access']
                 if action == 'get':
-                    user = 'user'
-                    user_id = int(''.join(filter(lambda x: x.isdigit(), msg.pop(0))))
-                    for level in access:
-                        if user_id in access[level]:
-                            user = level
+                    lvl = 'user'
+                    user = int(''.join(filter(lambda x: x.isdigit(), msg.pop(0))))
+                    try:
+                        vk.users.get(user_id=user)
+                    except:
+                        return False
+                    for level in acc.keys():
+                        if user in acc[level]:
+                            lvl = level
                             break
                     vk.messages.send(
                             peer_id=event.peer_id,
-                            message='Уровень доступа: <{0}>.'.format(user),
+                            message='Уровень доступа: <{0}>.'.format(lvl),
                             forward_messages=event.message_id
-                            ) 
+                            )
+                if action == 'set' and msg:
+                    user = int(msg.pop(0))
+                    level = msg.pop(0)
+                    if level not in acc:
+                        if level == 'user':
+                            pass
+                        else:
+                            return False
+
+                    try:
+                        vk.users.get(user_id=user)
+                    except:
+                        return False
+
+                    if level != 'user':
+                        if user in acc[level]:
+                            return True
+
+                    for lvl in acc.keys():
+                        if user in acc[lvl]:
+                            acc[lvl].remove(user)
+                            break
+                    
+                    if level != 'user':
+                        acc[level].append(user)
+                    
+                    bot.write_cfg()
+                    vk.messages.send(
+                            peer_id=event.peer_id,
+                            message='Пользователю {0} был установлен уровень доступа <{1}>.'.format(user, level),
+                            forward_messages=event.message_id
+                            )
     except Exception as err:
         print(err)
         return False
