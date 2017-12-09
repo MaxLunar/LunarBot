@@ -24,7 +24,7 @@ def call(**kw):
     except Exception as err:
         vk.messages.send(
                 peer_id=event.peer_id,
-                message='[ERROR]\n{0}\n{1}'.format(err),
+                message='[ERROR]\n{0}'.format(err),
                 forward_messages=event.message_id
                 )
         return False

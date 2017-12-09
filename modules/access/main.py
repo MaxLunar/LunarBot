@@ -19,9 +19,12 @@ def call(**kw):
                 acc = bot.config['access']
                 if action == 'get':
                     lvl = 'user'
-                    user = int(''.join(filter(lambda x: x.isdigit(), msg.pop(0))))
+                    user = int(msg.pop(0))
+                    first_name, last_name = None, None
                     try:
-                        vk.users.get(user_id=user)
+                        info = vk.users.get(user_id=user)[0]
+                        first_name = info['first_name']
+                        last_name = info['last_name']
                     except:
                         return False
                     for level in acc.keys():
@@ -30,12 +33,13 @@ def call(**kw):
                             break
                     vk.messages.send(
                             peer_id=event.peer_id,
-                            message='Уровень доступа: <{0}>.'.format(lvl),
+                            message='Уровень доступа пользователя {2} {3} (id{1}): <{0}>.'.format(lvl, user, first_name, last_name),
                             forward_messages=event.message_id
                             )
                 if action == 'set' and msg:
                     user = int(msg.pop(0))
                     level = msg.pop(0)
+                    first_name, last_name = None, None
                     if level not in acc:
                         if level == 'user':
                             pass
@@ -43,7 +47,9 @@ def call(**kw):
                             return False
 
                     try:
-                        vk.users.get(user_id=user)
+                        info = vk.users.get(user_id=user)[0]
+                        first_name = info['first_name']
+                        last_name = info['last_name']
                     except:
                         return False
 
@@ -62,7 +68,7 @@ def call(**kw):
                     bot.write_cfg()
                     vk.messages.send(
                             peer_id=event.peer_id,
-                            message='Пользователю {0} был установлен уровень доступа <{1}>.'.format(user, level),
+                            message='Пользователю {2} {3} (id{0}) был установлен уровень доступа <{1}>.'.format(user, level, first_name, last_name),
                             forward_messages=event.message_id
                             )
     except Exception as err:
