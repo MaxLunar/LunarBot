@@ -33,6 +33,7 @@ def main():
         def __init__(self, modules_dir=MODULES_DIR, config=CONFIG_FILE, work_dir=WORK_DIR):
             self.work_dir = work_dir
             log('INFO', 'Creating BotLocker instance...')
+            self.config_file = config
             self.config = json.load(open(config, 'r'))
             
             self.login = self.config['login']
@@ -46,14 +47,22 @@ def main():
             self.greetings = self.config['greetings']
             self.access = self.config['access']
             self.autoload = self.config['autoload']
+
+            self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
+            self.unwrap_lvl = lambda lvl: self.lvl_map[lvl]
             
             for mod in self.autoload:
                 self.load(mod)
 
         def update_cfg(self):
-            self.config = json.load(open(config_file, 'r'))
+            with open(self.config_file, 'r') as cfg:
+                self.config = json.load(cfg)
             self.greetings = self.config['greetings']
             self.access = self.config['access']
+
+        def write_cfg(self):
+            with open(self.config_file, 'w') as cfg:
+                json.dump(self.config, cfg, ensure_ascii=False, indent=4, sort_keys=False)
         
         def update_list(self):
             for module in filter(lambda x: x not in ['example_module', '__disabled__'], os.listdir(self.modules_dir)):
@@ -126,8 +135,14 @@ def main():
         
         def call(self, module, **kw):
             try:
-                self.modules[module].call(**kw)
-                return True
+                level = self.unwrap_lvl('user')
+                for acc in self.access.keys():
+                    if kw['event'].user_id in self.access[acc]:
+                        level = self.unwrap_lvl(acc)
+                        break
+                if self.unwrap_lvl(self.modules[module].access) <= level:
+                    self.modules[module].call(**kw)
+                    return True
             except Exception as error:
                 print(error)
                 return False

@@ -11,7 +11,8 @@ hash_list = {
 
 documentation = """crypto - различные хеши и шифрования
 Доступные хеши - {0}.
-Использование - L crypto sha256 *ваш_текст*""".format(', '.join(hash_list.keys()))
+Доступные шифрования - {1}.
+Использование - L crypto sha256 *ваш_текст*""".format(', '.join(hash_list.keys()), None)
 access = 'user'
 
 def call(**kw):
@@ -19,14 +20,18 @@ def call(**kw):
     event = kw['event']
     try:
         msg = event.text.split()
-        hashtype = msg[2:][0]
-        text = ' '.join(msg[3:])
-        if hashtype in hash_list.keys():
+        crypto_type = msg[2:][0]
+        if crypto_type in hash_list.keys():
+            text = ' '.join(msg[3:])
             vk.messages.send(
                     peer_id=event.peer_id,
-                    message='Результат: {0}'.format(hash_list[hashtype](text)),
+                    message='Результат: {0}'.format(hash_list[crypto_type](text)),
                     forward_messages=event.message_id
                     )
+        #elif crypto_type in crypto_list.keys():
+            ########
+            # TODO #
+        #    pass
     except Exception as err:
         print(err)
         return False
