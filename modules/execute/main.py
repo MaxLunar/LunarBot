@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
+import html
+import traceback
 from contextlib import redirect_stdout
 
 documentation = """execute - выполняет Python команду.
@@ -11,7 +13,7 @@ def call(**kw):
     event = kw['event']
     try:
         msg = event.text.split()[2:]
-        command = ' '.join(msg)
+        command = html.unescape(' '.join(msg))
         out = io.StringIO()
 
         with redirect_stdout(out):
@@ -24,7 +26,7 @@ def call(**kw):
     except Exception as err:
         vk.messages.send(
                 peer_id=event.peer_id,
-                message='[ERROR]\n{0}'.format(err),
+                message='[ERROR]\n{0}'.format(traceback.format_exc()),
                 forward_messages=event.message_id
                 )
         return False

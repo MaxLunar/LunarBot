@@ -105,11 +105,15 @@ def main():
             
             for prefix in self.module_list.keys():
                 if module in self.module_list[prefix]:
+                    try:
+                        self.sources[prefix].terminate()
+                    except:
+                        pass
                     self.sources.pop(prefix)
                     
                     for name in self.module_list[prefix]:
                         self.modules.pop(name)
-                    del sys.modules[module]
+                    del sys.modules[prefix]
                     log('INFO', 'Successfully unloaded "{0}" module.'.format(module))
                     return 1
 
@@ -122,6 +126,10 @@ def main():
                 return -1
             
             if module in self.sources.keys():
+                try:
+                    self.sources[module].terminate()
+                except:
+                    pass
                 del sys.modules[module]
                 importlib.invalidate_caches()
                 

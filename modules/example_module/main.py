@@ -1,4 +1,5 @@
 # NOTE: call function is IMPORTANT for each module
+#       terminate function required for modules working with files, etc., just to close them and finish work
 #       each module receives next data:
 #       "vk" object - vk_api.VkApi().get_api() object to work with VK API
 #       "vk_session" object - authorized vk_api.VkApi() object to use with VkUpload etc.
@@ -9,6 +10,11 @@ documentation = """example_module - This is example documentation. Can be used f
 This module exists only for example purposes."""
 
 access = 'user' # access level of this command. Can be used to restrict some users from using specific commands
+
+def terminate():
+    # Store all files and objects in variables/dictionary from global namespace, to ensure visibility
+    pass
+
 def call(**kw):
     vk = kw['vk']
     event = kw['event']
