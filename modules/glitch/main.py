@@ -3,12 +3,25 @@ import io
 import vk_api
 import requests
 import traceback
-from random import choice
-from wand.image import Image
 
-documentation = """cas - разьебывает пикчу CAS'ом"""
+from random import choice
+from PIL import Image
+from itertools import tee
+
+documentation = """glitch - разьебывает пикчу глитчами"""
 
 access = 'user'
+def pairwise(iterable):
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
+
+def get_header_length(bts):
+    for i, pair in enumerate(pairwise(bts)):
+        if pair[0] == 255 and pair[1] == 218:
+            result = i + 2
+            return result
+
 def call(**kw):
     vk = kw['vk']
     event = kw['event']
@@ -26,27 +39,20 @@ def call(**kw):
         if photo_url is not None:
             photo_download = requests.get(photo_url, stream=True)
             photo_download.raw.decode_content = True
-            result = io.BytesIO()
-            with Image(file=photo_download.raw) as photo:
-                size = photo.size
-                coef_x = choice((2,3,4,5))
-                coef_y = choice((2,3,4,5))
-                if choice((0, 1)) == 0:
-                    ch = ('div', 'mul')
-                    x_size = size[0]//coef_x
-                    y_size = size[1]//coef_x
-                else:
-                    ch = ('mul', 'div')
-                    x_size = size[0]//coef_x
-                    y_size = size[1]//coef_x
-                photo.liquid_rescale(x_size, y_size)
-                photo.sample(size[0], size[1])
-                photo.save(file=result)
-            result.seek(0)
-            response = upload.photo_messages(result)[0]
+            result = io.BytesIO(photo_download.content)
+            data = result.read()
+            header_length = get_header_length(data)
+            header, safe_data = data[:header_length], data[header_length:]
+            safe_data = safe_data.replace(bytes([choice(data)]), bytes([choice(data)]))
+            proc = io.BytesIO(header+safe_data)
+            img = Image.open(proc)
+            final = io.BytesIO()
+            img.save(final, format='PNG')
+            final.seek(0)
+            response = upload.photo_messages(final)[0]
             vk.messages.send(
                     peer_id=event.peer_id,
-                    message='Твоё фото: ({0}x{1} => {2}x{3} (coef = div {4}) => {0}x{1})'.format(size[0], size[1], x_size, y_size, coef_x),
+                    message='Твоё фото:',
                     attachment='photo{0}_{1}'.format(response['owner_id'], response['id'])
                     )
                 

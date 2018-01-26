@@ -3,10 +3,9 @@ import io
 import vk_api
 import requests
 import traceback
-from random import choice
-from wand.image import Image
+from PIL import Image
 
-documentation = """cas - разьебывает пикчу CAS'ом"""
+documentation = """jpeg - разьебывает пикчу JPEG-сжатием"""
 
 access = 'user'
 def call(**kw):
@@ -27,26 +26,13 @@ def call(**kw):
             photo_download = requests.get(photo_url, stream=True)
             photo_download.raw.decode_content = True
             result = io.BytesIO()
-            with Image(file=photo_download.raw) as photo:
-                size = photo.size
-                coef_x = choice((2,3,4,5))
-                coef_y = choice((2,3,4,5))
-                if choice((0, 1)) == 0:
-                    ch = ('div', 'mul')
-                    x_size = size[0]//coef_x
-                    y_size = size[1]//coef_x
-                else:
-                    ch = ('mul', 'div')
-                    x_size = size[0]//coef_x
-                    y_size = size[1]//coef_x
-                photo.liquid_rescale(x_size, y_size)
-                photo.sample(size[0], size[1])
-                photo.save(file=result)
+            with Image.open(photo_download.raw) as photo:
+                photo.save(result, format="JPEG", quality=1)
             result.seek(0)
             response = upload.photo_messages(result)[0]
             vk.messages.send(
                     peer_id=event.peer_id,
-                    message='Твоё фото: ({0}x{1} => {2}x{3} (coef = div {4}) => {0}x{1})'.format(size[0], size[1], x_size, y_size, coef_x),
+                    message='Твоё фото:',
                     attachment='photo{0}_{1}'.format(response['owner_id'], response['id'])
                     )
                 
