@@ -3,3 +3,4 @@ bot_config.cfg
 **/*.pyc
 **/__pycache__
 **/__disabled__
+**/*.log

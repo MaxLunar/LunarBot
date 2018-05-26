@@ -6,6 +6,7 @@ import time
 import importlib
 import importlib.machinery
 import json
+from selenium.webdriver import PhantomJS
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 def main():
@@ -47,6 +48,10 @@ def main():
             self.greetings = self.config['greetings']
             self.access = self.config['access']
             self.autoload = self.config['autoload']
+            
+            self.utilities = {}
+            self.utilities.update({'webdriver': PhantomJS()})
+            log('INFO', 'PhantomJS webdriver started.')
 
             self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
             self.unwrap_lvl = lambda lvl: self.lvl_map[lvl]
