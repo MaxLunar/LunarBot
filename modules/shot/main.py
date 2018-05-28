@@ -17,9 +17,12 @@ def call(**kw):
     try:
         upload = vk_api.VkUpload(vk_session)
         msg = list(filter(None, event.text.split()))[2:]
-        url = msg[0]
-        if not url.startswith('http'):
-            url = 'http://' + url
+        if msg:
+            url = msg[0]
+            if not url.startswith('http'):
+                url = 'http://' + url
+        else:
+            url = None
         if len(msg) >= 2:
             if 'x' in msg[1]:
                 size = msg[1].split('x')
@@ -27,8 +30,11 @@ def call(**kw):
                 size = msg[1].split('х')
         else:
             size = [1280, 720]
+        if url:
+            driver.get(url)
+        if driver.current_url == 'about:blank':
+            return
         driver.set_window_size(size[0], size[1])
-        driver.get(url)
         img = base64.b64decode(driver.get_screenshot_as_base64())
         result = io.BytesIO()
         with Image(blob=img) as photo:

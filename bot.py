@@ -36,7 +36,7 @@ def main():
             log('INFO', 'Creating BotLocker instance...')
             self.config_file = config
             self.config = json.load(open(config, 'r'))
-            
+
             self.login = self.config['login']
             self.password = self.config['password']
             
@@ -50,7 +50,8 @@ def main():
             self.autoload = self.config['autoload']
             
             self.utilities = {}
-            self.utilities.update({'webdriver': PhantomJS()})
+            self.phantom_path = '/home/maxlunar/node_modules/phantomjs/lib/phantom/bin/phantomjs'
+            self.utilities.update({'webdriver': PhantomJS(executable_path=self.phantom_path)})
             log('INFO', 'PhantomJS webdriver started.')
 
             self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
@@ -123,28 +124,31 @@ def main():
                     return 1
 
         def reload(self, module):
-            if not module in self.modules.keys():
-                if not module in sum(self.module_list.values(), []):
-                    log('ERROR', 'Module "{0}" doesn\'t exist.'.format(module))
-                    return 0
-                log('ERROR', 'Module "{0}" isn\'t loaded.'.format(module))
-                return -1
-            
-            if module in self.sources.keys():
-                try:
-                    self.sources[module].terminate()
-                except:
-                    pass
-                del sys.modules[module]
-                importlib.invalidate_caches()
-                
-                path = self.modules_dir + module + '/main.py'
-                self.sources[module] = importlib.machinery.SourceFileLoader(module, path).load_module()
-                
-                for key in self.module_list[module]:
-                    self.modules.update({key: self.sources[module]})
-                log('INFO', 'Successfully reloaded "{0}" module.'.format(module))
-                return 1
+            status = self.unload(module)
+            status = self.load(module)
+            return status
+#           if not module in self.modules.keys():
+#               if not module in sum(self.module_list.values(), []):
+#                   log('ERROR', 'Module "{0}" doesn\'t exist.'.format(module))
+#                   return 0
+#               log('ERROR', 'Module "{0}" isn\'t loaded.'.format(module))
+#               return -1
+#           
+#           if module in self.sources.keys():
+#               try:
+#                   self.sources[module].terminate()
+#               except:
+#                   pass
+#               del sys.modules[module]
+#               importlib.invalidate_caches()
+#               
+#               path = self.modules_dir + module + '/main.py'
+#               self.sources[module] = importlib.machinery.SourceFileLoader(module, path).load_module()
+#               
+#               for key in self.module_list[module]:
+#                   self.modules.update({key: self.sources[module]})
+#               log('INFO', 'Successfully reloaded "{0}" module.'.format(module))
+#               return 1
         
         def call(self, module, **kw):
             try:
