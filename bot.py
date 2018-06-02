@@ -3,6 +3,7 @@ import vk_api
 import os
 import sys
 import time
+import random
 import importlib
 import importlib.machinery
 import json
@@ -50,9 +51,8 @@ def main():
             self.autoload = self.config['autoload']
             
             self.utilities = {}
-            self.phantom_path = '/home/maxlunar/node_modules/phantomjs/lib/phantom/bin/phantomjs'
-            self.utilities.update({'webdriver': PhantomJS(executable_path=self.phantom_path)})
-            log('INFO', 'PhantomJS webdriver started.')
+            self.utilities.update({'webdriver': PhantomJS(executable_path=self.work_dir+'/core/webdriver/phantomjs/bin/phantomjs', service_args=['--cookies-file={0}/tmp/phantomcookie{1}'.format(self.work_dir, str(random.randint(0, 10*10)).zfill(11))])})
+            log('INFO', 'Webdriver service started.')
 
             self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
             self.unwrap_lvl = lambda lvl: self.lvl_map[lvl]

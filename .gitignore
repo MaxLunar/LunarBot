@@ -4,3 +4,4 @@ bot_config.cfg
 **/__pycache__
 **/__disabled__
 **/*.log
+**/tmp/*
