@@ -26,10 +26,14 @@ class MyGlobals(dict):
 def call(**kw):
     vk = kw['vk']
     event = kw['event']
-    driver = kw['bot'].utilities['webdriver']
+    try:
+        driver = kw['bot'].utilities['webdriver']
+    except:
+        pass
     try:
         msg = event.text.split()[2:]
         command = html.unescape(' '.join(msg))
+        command = command.replace(chr(0x1f914), '    ')
         out = io.StringIO()
         d = MyGlobals(globals(), locals())
         with redirect_stdout(out):

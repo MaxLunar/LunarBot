@@ -7,6 +7,7 @@ import random
 import importlib
 import importlib.machinery
 import json
+import traceback
 from selenium.webdriver import PhantomJS
 from vk_api.longpoll import VkLongPoll, VkEventType
 
@@ -51,7 +52,8 @@ def main():
             self.autoload = self.config['autoload']
             
             self.utilities = {}
-            self.utilities.update({'webdriver': PhantomJS(executable_path=self.work_dir+'/core/webdriver/phantomjs/bin/phantomjs', service_args=['--cookies-file={0}/tmp/phantomcookie{1}'.format(self.work_dir, str(random.randint(0, 10*10)).zfill(11))])})
+            #self.utilities.update({'webdriver': PhantomJS(executable_path=self.work_dir+'/core/webdriver/phantomjs/bin/phantomjs', service_args=['--cookies-file={0}/tmp/phantomcookie{1}'.format(self.work_dir, str(random.randint(0, 10*10)).zfill(11))])})
+
             log('INFO', 'Webdriver service started.')
 
             self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
@@ -287,4 +289,10 @@ def main():
             print(event.type, event.raw[1:])
 
 if __name__ == '__main__':
-    main()
+    while 1:
+        try:
+            main()
+        except Exception as e:
+            traceback.print_exc()
+            print('Sleeping 10 seconds due to error above...')
+            time.sleep(10)

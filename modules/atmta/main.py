@@ -13,8 +13,6 @@ def call(**kw):
     event = kw['event']
     vk_session = kw['vk_session']
     try:
-        msg = list(filter(None, event.text.split()))
-        mode = msg[1]
         upload = vk_api.VkUpload(vk_session)
         msg = vk.messages.getById(message_ids=[event.message_id])['items'][0]
         photo_url = None
@@ -27,23 +25,40 @@ def call(**kw):
         if photo_url is not None:
             photo_download = requests.get(photo_url, stream=True)
             photo_download.raw.decode_content = True
-            result = io.BytesIO()
-            with Image.open(photo_download.raw) as photo:
-                if mode == 'xymyx':
-                    img_half = photo.crop((0, 0, photo.width//2, photo.height))
-                    img_flip = ImageOps.mirror(img_half)
-                    photo.paste(img_flip, (photo.width//2, 0))
-                elif mode == 'atmta':
-                    img_half = photo.crop((photo.width//2, 0, photo.width, photo.height))
-                    img_flip = ImageOps.mirror(img_half)
-                    photo.paste(img_flip, (0, 0))
-                photo.save(result, format='PNG')
-            result.seek(0)
-            response = upload.photo_messages(result)[0]
+            result = [io.BytesIO() for _ in range(4)]
+            raw_photo = photo_download.raw.read()
+            raw_photos = [io.BytesIO() for _ in range(4)]
+            for x in raw_photos:
+                x.write(raw_photo)
+                x.seek(0)
+            for c in range(4):
+                with Image.open(raw_photos[c]) as photo:
+                    if c == 0:
+                        img_half = photo.crop((0, 0, photo.width//2, photo.height))
+                        img_flip = ImageOps.mirror(img_half)
+                        photo.paste(img_flip, (photo.width//2, 0))
+                    elif c == 1:
+                        img_half = photo.crop((photo.width//2, 0, photo.width, photo.height))
+                        img_flip = ImageOps.mirror(img_half)
+                        photo.paste(img_flip, (0, 0))
+                    elif c == 2:
+                        img_half = photo.crop((0, 0, photo.width, photo.height//2))
+                        img_flip = ImageOps.flip(img_half)
+                        photo.paste(img_flip, (0, photo.height//2))
+                    elif c == 3:
+                        img_half = photo.crop((0, photo.height//2, photo.width, photo.height))
+                        img_flip = ImageOps.flip(img_half)
+                        photo.paste(img_flip, (0, 0))
+                    photo.save(result[c], format='PNG')
+                    result[c].seek(0)
+                    raw_photos[c] = None
+
+            response = ['photo{0}_{1}'.format(item['owner_id'], item['id']) for item in upload.photo_messages(result)]
+
             vk.messages.send(
                     peer_id=event.peer_id,
-                    message='Твоё фото:',
-                    attachment='photo{0}_{1}'.format(response['owner_id'], response['id'])
+                    message='Твои фото:',
+                    attachment=','.join(response)
                     )
                 
                 
