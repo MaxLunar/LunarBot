@@ -7,6 +7,7 @@ documentation = """random X Y - генерирует случайное числ
 
 access = 'user'
 
+
 def call(**kw):
     vk = kw['vk']
     event = kw['event']
@@ -14,10 +15,11 @@ def call(**kw):
         msg = list(filter(None, event.text.split()))
         if len(msg[2]) > max_size or len(msg[3]) > max_size:
             vk.messages.send(
-                    peer_id=event.peer_id,
-                    message='Введенные числа слишком большие (это не значит, что бот не может их обработать).',
-                    forward_messages=event.message_id
-                    )
+                peer_id=event.peer_id,
+                message='Введенные числа слишком большие (это не значит, что бот не может их обработать).',
+                random_id=random.randrange(2**32),
+                forward_messages=event.message_id
+            )
             return None
         num1, num2 = int(msg[2]), int(msg[3])
         if num1 < num2:
@@ -27,10 +29,11 @@ def call(**kw):
         elif num1 == num2:
             response = 'Твое число: {0}\n(сверхразум detected).'.format(num1)
         vk.messages.send(
-                peer_id=event.peer_id,
-                message=response,
-                forward_messages=event.message_id
-                )
+            peer_id=event.peer_id,
+            message=response,
+            random_id=random.randrange(2**32),
+            forward_messages=event.message_id
+        )
     except Exception as err:
         print(err)
         return False

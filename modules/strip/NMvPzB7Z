@@ -1,0 +1,26 @@
+import random
+import colour
+from PIL import Image, ImageDraw
+
+def gen_bounds(size, amount, orientation='v'):
+    if orientation == 'v':
+        o = 1
+    elif orientation == 'h':
+        o = -1
+    size = size[::o]
+    for x in range(amount)[::2]:
+        yield [((size[0]//amount)*x, 0)[::o], 
+               ((size[0]//amount)*(x+1), size[1])[::o]]
+
+first_color = colour.Color(rgb=tuple(random.randint(0, 255)/255 for _ in range(3)))
+first = tuple(int(x*255) for x in first_color.rgb)
+
+second_color = colour.Color(rgb=tuple(random.randint(0, 255)/255 for _ in range(3)))
+second = tuple(int(x*255) for x in second_color.rgb)
+
+img = Image.new(mode='RGB', size=(2000, 2000), color=first)
+draw = ImageDraw.ImageDraw(img)
+
+strips = gen_bounds(img.size, random.randint(7, 29), random.choice(('v', 'h')))
+for bound in strips:
+    draw.rectangle(bound, second)

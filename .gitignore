@@ -1,7 +1,8 @@
-**/vk_config*.*
-bot_config.cfg
+**/vk_config*
+config.json
 **/*.pyc
 **/__pycache__
 **/__disabled__
 **/*.log
 **/tmp/*
+old_modules

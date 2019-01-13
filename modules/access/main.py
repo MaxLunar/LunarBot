@@ -1,8 +1,11 @@
 import json
+import random
+import re
 
 documentation = """access - установка и просмотр прав пользователей.
 Использование: access set/get user_id"""
 access = 'superadmin'
+
 
 def call(**kw):
     vk = kw['vk']
@@ -14,30 +17,37 @@ def call(**kw):
         msg.pop(0)
         if event:
             action = msg.pop(0)
-            
+            regex = re.compile(
+                r'((?<=https\:\/\/vk\.com\/id)\d+)|((?<=id)\d+)|(\d+)')
             if msg:
                 acc = bot.config['access']
                 if action == 'get':
                     lvl = 'user'
+                    # int(regex.match(event.text).group(0))
                     user = int(msg.pop(0))
+                    # msg.pop(0)
                     first_name, last_name = None, None
                     try:
                         info = vk.users.get(user_id=user)[0]
                         first_name = info['first_name']
                         last_name = info['last_name']
-                    except:
+                    except BaseException:
                         return False
                     for level in acc.keys():
                         if user in acc[level]:
                             lvl = level
                             break
                     vk.messages.send(
-                            peer_id=event.peer_id,
-                            message='Уровень доступа пользователя {2} {3} (id{1}): <{0}>.'.format(lvl, user, first_name, last_name),
-                            forward_messages=event.message_id
-                            )
+                        peer_id=event.peer_id,
+                        message='Уровень доступа пользователя {2} {3} (id{1}): <{0}>.'.format(
+                            lvl, user, first_name, last_name),
+                        random_id=random.randrange(2**32),
+                        forward_messages=event.message_id
+                    )
                 if action == 'set' and msg:
+                    # int(regex.match(event.text).group(0))
                     user = int(msg.pop(0))
+                    # msg.pop(0)
                     level = msg.pop(0)
                     first_name, last_name = None, None
                     if level not in acc:
@@ -50,7 +60,7 @@ def call(**kw):
                         info = vk.users.get(user_id=user)[0]
                         first_name = info['first_name']
                         last_name = info['last_name']
-                    except:
+                    except BaseException:
                         return False
 
                     if level != 'user':
@@ -61,16 +71,18 @@ def call(**kw):
                         if user in acc[lvl]:
                             acc[lvl].remove(user)
                             break
-                    
+
                     if level != 'user':
                         acc[level].append(user)
-                    
+
                     bot.write_cfg()
                     vk.messages.send(
-                            peer_id=event.peer_id,
-                            message='Пользователю {2} {3} (id{0}) был установлен уровень доступа <{1}>.'.format(user, level, first_name, last_name),
-                            forward_messages=event.message_id
-                            )
+                        peer_id=event.peer_id,
+                        message='Пользователю {2} {3} (id{0}) был установлен уровень доступа <{1}>.'.format(
+                            user, level, first_name, last_name),
+                        random_id=random.randrange(2**32),
+                        forward_messages=event.message_id
+                    )
     except Exception as err:
         print(err)
         return False

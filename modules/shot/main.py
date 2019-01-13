@@ -9,6 +9,8 @@ from wand.image import Image
 documentation = """shot - скриншотилка сайтов. Использование - L shot <url> [size]"""
 
 access = 'superadmin'
+
+
 def call(**kw):
     vk = kw['vk']
     event = kw['event']
@@ -42,16 +44,16 @@ def call(**kw):
         result.seek(0)
         response = upload.photo_messages(result)[0]
         vk.messages.send(
-                peer_id=event.peer_id,
-                message='Твоё фото:',
-                attachment='photo{0}_{1}'.format(response['owner_id'], response['id'])
-                )
-                
-                
+            peer_id=event.peer_id,
+            message='Твоё фото:',
+            attachment='photo{0}_{1}'.format(
+                response['owner_id'], response['id'])
+        )
+
     except Exception as err:
         vk.messages.send(
-                peer_id=event.peer_id,
-                message='[ERROR]\n{0}'.format(traceback.format_exc()),
-                forward_messages=event.message_id
-                )
+            peer_id=event.peer_id,
+            message='[ERROR]\n{0}'.format(traceback.format_exc()),
+            forward_messages=event.message_id
+        )
         return False

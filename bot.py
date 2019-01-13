@@ -8,23 +8,28 @@ import importlib
 import importlib.machinery
 import json
 import traceback
-from selenium.webdriver import PhantomJS
+#from selenium.webdriver import PhantomJS
 from vk_api.longpoll import VkLongPoll, VkEventType
+
 
 def main():
     ##################
     # Pre-init phase #
     def log(level, message):
-        print('[{0} | {1}] {2}'.format(time.strftime("%H:%M:%S"), level, message))
-    
+        print(
+            '[{0} | {1}] {2}'.format(
+                time.strftime("%H:%M:%S"),
+                level,
+                message))
+
     WORK_DIR = sys.path[0]
     MODULES_DIR = WORK_DIR + "/modules/"
-    CONFIG_FILE = WORK_DIR + "/bot_config.cfg"
+    CONFIG_FILE = WORK_DIR + "/config.json"
 
     if not os.path.exists(CONFIG_FILE):
         log('WARN', 'Configuration file is missing or has another name, creating new one...')
-        open(CONFIG_FILE, 'w') 
-    
+        open(CONFIG_FILE, 'w').close()
+
     if not os.path.exists(MODULES_DIR):
         log('WARN', 'Missing modules directory/invalid name, creating new one...')
         os.mkdir(MODULES_DIR)
@@ -33,7 +38,8 @@ def main():
         log('WARN', 'Bot is actually useless without modules, consider making some of them.')
 
     class BotLocker:
-        def __init__(self, modules_dir=MODULES_DIR, config=CONFIG_FILE, work_dir=WORK_DIR):
+        def __init__(self, modules_dir=MODULES_DIR,
+                     config=CONFIG_FILE, work_dir=WORK_DIR):
             self.work_dir = work_dir
             log('INFO', 'Creating BotLocker instance...')
             self.config_file = config
@@ -41,24 +47,29 @@ def main():
 
             self.login = self.config['login']
             self.password = self.config['password']
-            
+
             self.modules_dir = MODULES_DIR
             self.sources = {}
             self.modules = {}
             self.module_list = {}
-            
+
             self.greetings = self.config['greetings']
             self.access = self.config['access']
             self.autoload = self.config['autoload']
-            
+
             self.utilities = {}
             #self.utilities.update({'webdriver': PhantomJS(executable_path=self.work_dir+'/core/webdriver/phantomjs/bin/phantomjs', service_args=['--cookies-file={0}/tmp/phantomcookie{1}'.format(self.work_dir, str(random.randint(0, 10*10)).zfill(11))])})
 
             log('INFO', 'Webdriver service started.')
 
-            self.lvl_map = {'banned': 0, 'user': 1, 'moder': 2, 'admin': 3, 'superadmin': 4}
+            self.lvl_map = {
+                'banned': 0,
+                'user': 1,
+                'moder': 2,
+                'admin': 3,
+                'superadmin': 4}
             self.unwrap_lvl = lambda lvl: self.lvl_map[lvl]
-            
+
             for mod in self.autoload:
                 self.load(mod)
 
@@ -70,10 +81,16 @@ def main():
 
         def write_cfg(self):
             with open(self.config_file, 'w') as cfg:
-                json.dump(self.config, cfg, ensure_ascii=False, indent=4, sort_keys=False)
-        
+                json.dump(
+                    self.config,
+                    cfg,
+                    ensure_ascii=False,
+                    indent=4,
+                    sort_keys=False)
+
         def update_list(self):
-            for module in filter(lambda x: x not in ['example_module', '__disabled__'], os.listdir(self.modules_dir)):
+            for module in filter(lambda x: x not in [
+                                 'example_module', '__disabled__'], os.listdir(self.modules_dir)):
                 mod_prefix = None
                 try:
                     with open(self.modules_dir + module + '/' + 'prefix.cfg', 'r') as prefixes:
@@ -82,23 +99,23 @@ def main():
                     print(err)
                     continue
                 self.module_list.update(mod_prefix)
-        
+
         def load(self, module):
             self.update_list()
-            
+
             if module in self.modules.keys():
                 log('ERROR', 'Module "{0}" is already loaded.'.format(module))
                 return -1
-            
+
             for prefix in self.module_list.keys():
                 if module in self.module_list[prefix]:
                     path = self.modules_dir + prefix + '/main.py'
-                    self.sources.update(\
-                {prefix: importlib.machinery.SourceFileLoader(prefix, path).load_module()})
-                    
+                    self.sources.update(
+                        {prefix: importlib.machinery.SourceFileLoader(prefix, path).load_module()})
                     for name in self.module_list[prefix]:
                         self.modules.update({name: self.sources[prefix]})
-                    log('INFO', 'Successfully loaded "{0}" module.'.format(prefix))
+                    log('INFO',
+                        'Successfully loaded "{0}" module.'.format(prefix))
                     return 1
             log('ERROR', 'No such module: "{0}".'.format(module))
             return 0
@@ -108,21 +125,23 @@ def main():
                 if not module in sum(self.module_list.values(), []):
                     log('ERROR', 'Module "{0}" doesn\'t exist.'.format(module))
                     return 0
-                log('ERROR', 'Module "{0}" isn\'t loaded or doesn\'t exist.'.format(module))
+                log('ERROR',
+                    'Module "{0}" isn\'t loaded or doesn\'t exist.'.format(module))
                 return -1
-            
+
             for prefix in self.module_list.keys():
                 if module in self.module_list[prefix]:
                     try:
                         self.sources[prefix].terminate()
-                    except:
+                    except BaseException:
                         pass
                     self.sources.pop(prefix)
-                    
+
                     for name in self.module_list[prefix]:
                         self.modules.pop(name)
                     del sys.modules[prefix]
-                    log('INFO', 'Successfully unloaded "{0}" module.'.format(module))
+                    log('INFO',
+                        'Successfully unloaded "{0}" module.'.format(module))
                     return 1
 
         def reload(self, module):
@@ -135,7 +154,7 @@ def main():
 #                   return 0
 #               log('ERROR', 'Module "{0}" isn\'t loaded.'.format(module))
 #               return -1
-#           
+#
 #           if module in self.sources.keys():
 #               try:
 #                   self.sources[module].terminate()
@@ -143,15 +162,15 @@ def main():
 #                   pass
 #               del sys.modules[module]
 #               importlib.invalidate_caches()
-#               
+#
 #               path = self.modules_dir + module + '/main.py'
 #               self.sources[module] = importlib.machinery.SourceFileLoader(module, path).load_module()
-#               
+#
 #               for key in self.module_list[module]:
 #                   self.modules.update({key: self.sources[module]})
 #               log('INFO', 'Successfully reloaded "{0}" module.'.format(module))
 #               return 1
-        
+
         def call(self, module, **kw):
             try:
                 level = self.unwrap_lvl('user')
@@ -165,7 +184,6 @@ def main():
             except Exception as error:
                 print(error)
                 return False
-        
 
     ##################
 
@@ -190,13 +208,14 @@ def main():
 
     #####################
     # Utility functions #
-    
+
     def simple_reply(msg):
         vk.messages.send(
-                peer_id=event.peer_id,
-                message=msg,
-                forward_messages=event.message_id
-                )
+            peer_id=event.peer_id,
+            message=msg,
+            random_id=random.randrange(2**32),
+            forward_messages=event.message_id
+        )
 
     #####################
 
@@ -216,13 +235,14 @@ def main():
                 print(event.user_id, 'в беседе', event.chat_id)
             elif event.from_group:
                 print('группы', event.group_id)
+                continue
 
             print('Текст: ', event.text)
             print()
-            
+
             #########################
             # Responses to messages #
-            if not event.text and event.user_id in bot.access['banned']:
+            if not event.text and event.user_id in bot.access['banned'] or event.user_id < 0:
                 continue
 
             msg = list(filter(None, event.text.split()))
@@ -232,41 +252,66 @@ def main():
 
             if msg[0].lower() in bot.greetings and len(msg) != 1:
                 command, options = msg[1].lower(), msg[2:]
-                
+
                 if event.user_id in bot.access['superadmin']:
-                    if command == 'load' and options:
-                        result = bot.load(options[0])
-                        
-                        if result == 1:
-                            simple_reply('Модуль "{0}" успешно загружен.'.format(options[0]))
-                        elif result == 0:
-                            simple_reply('Модуль "{0}" не существует.'.format(options[0]))
-                        elif result == -1:
-                            simple_reply('Модуль "{0}" уже загружен'.format(options[0]))
-                    
-                    if command == 'unload' and options:
-                        result = bot.unload(options[0])
-                        
-                        if result == 1:
-                            simple_reply('Модуль "{0}" успешно выгружен.'.format(options[0]))
-                        elif result == 0:
-                            simple_reply('Модуль "{0}" не существует.'.format(options[0]))
-                        elif result == -1:
-                            simple_reply('Модуль "{0}" не загружен в данный момент.'.format(options[0]))
-                    if command == 'reload' and options:
-                        result = bot.reload(options[0])
-                        
-                        if result == 1:
-                            simple_reply('Модуль "{0}" успешно перезагружен.'.format(options[0]))
-                        elif result == 0:
-                            simple_reply('Модуль "{0}" не существует.'.format(options[0]))
-                        elif result == -1:
-                            simple_reply('Модуль "{0}" не загружен в данный момент'.format(options[0]))
+                    try:
+                        if command == 'load' and options:
+                            result = bot.load(options[0])
+
+                            if result == 1:
+                                simple_reply(
+                                    'Модуль "{0}" успешно загружен.'.format(
+                                        options[0]))
+                            elif result == 0:
+                                simple_reply(
+                                    'Модуль "{0}" не существует.'.format(
+                                        options[0]))
+                            elif result == -1:
+                                simple_reply(
+                                    'Модуль "{0}" уже загружен'.format(
+                                        options[0]))
+
+                        if command == 'unload' and options:
+                            result = bot.unload(options[0])
+
+                            if result == 1:
+                                simple_reply(
+                                    'Модуль "{0}" успешно выгружен.'.format(
+                                        options[0]))
+                            elif result == 0:
+                                simple_reply(
+                                    'Модуль "{0}" не существует.'.format(
+                                        options[0]))
+                            elif result == -1:
+                                simple_reply(
+                                    'Модуль "{0}" не загружен в данный момент.'.format(
+                                        options[0]))
+                        if command == 'reload' and options:
+                            result = bot.reload(options[0])
+
+                            if result == 1:
+                                simple_reply(
+                                    'Модуль "{0}" успешно перезагружен.'.format(
+                                        options[0]))
+                            elif result == 0:
+                                simple_reply(
+                                    'Модуль "{0}" не существует.'.format(
+                                        options[0]))
+                            elif result == -1:
+                                simple_reply(
+                                    'Модуль "{0}" не загружен в данный момент'.format(
+                                        options[0]))
+                    except BaseException:
+                        simple_reply(traceback.format_exc())
 
                 if command in bot.modules.keys():
-                    bot.call(module=command, vk=vk, vk_session=vk_session, event=event, bot=bot)
+                    bot.call(
+                        module=command,
+                        vk=vk,
+                        vk_session=vk_session,
+                        event=event,
+                        bot=bot)
                 #########################
-
 
         elif event.type == VkEventType.USER_TYPING:
             print('Печатает ', end='')
@@ -281,18 +326,19 @@ def main():
 
         elif event.type == VkEventType.USER_ONLINE:
             print('Пользователь', event.user_id, 'онлайн', event.platform)
- 
+
         elif event.type == VkEventType.USER_OFFLINE:
             print('Пользователь', event.user_id, 'оффлайн', event.offline_type)
- 
+
         else:
             print(event.type, event.raw[1:])
+
 
 if __name__ == '__main__':
     while 1:
         try:
             main()
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
             print('Sleeping 10 seconds due to error above...')
             time.sleep(10)
